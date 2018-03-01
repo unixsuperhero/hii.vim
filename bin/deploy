@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+home_autoload_dir = File.join(Dir.home, '.config/nvim/autoload')
+dest_file = File.join(home_autoload_dir, 'h.vim')
+
+src_file = File.join(Dir.pwd, 'autoload', 'hii.vim')
+
+if File.exist?(dest_file) && File.exist?(src_file)
+  system 'vim', '-d', src_file, dest_file
+end
+
+puts
+print 'Commit h.vim in %s? ' % [home_autoload_dir]
+answer = $stdin.gets
+if answer.strip[/^\s*y/i]
+  Dir.chdir Dir.home
+  system('git','add',dest_file)
+  system('git','commit','-m','moving changes from projects/hii.vim/ to .config/nvim/')
+end
+
