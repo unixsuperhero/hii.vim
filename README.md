@@ -12,6 +12,8 @@ the subcommands can go as deep as you want, so you can do:
 for: `H_heroku_deploy()` (would need the intermediate `H_heroku()` function tho  
 that knows it accepts another set of potential subcommands.
 
+(see: `H_list()` and `H_list_date()` for an example)
+
 I also don't know if you've seen xiki, but this kind of lets you do stuff in  
 the same vane (sp?).
 
