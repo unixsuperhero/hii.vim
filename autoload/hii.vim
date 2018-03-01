@@ -6,11 +6,7 @@ function! HHandler(prefix,...)
 
   let nfun = join([a:prefix,a:000[0]], '_')
   if exists('*' . nfun)
-    if a:0 > 1
-      call call(nfun, remove(copy(a:000),1,-1))
-    else
-      call call(nfun, [])
-    endif
+    call call(nfun, (a:0 > 1) ? remove(copy(a:000),1,-1) : [])
     return 1
   end
 
