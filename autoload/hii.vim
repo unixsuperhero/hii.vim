@@ -5,6 +5,14 @@ function! H__file(fmt, ...)
   return expand((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
 endfunction
 
+function! H__fdir(file)
+  call H__sh('mkdir -pv $(dirname %s)', shellescape(expand(a:file)))
+endfunction
+
+function! H__mkdir(dir)
+  call H__sh('mkdir -pv %s', shellescape(expand(a:dir)))
+endfunction
+
 function! H__sh(fmt, ...)
   return system((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
 endfunction
@@ -78,14 +86,14 @@ endfunction
 function! H_process_sh(regex,line,text)
   let epoch = strftime('%s')
   let outfile = H__file('~/hii/sh/%s.log', epoch)
-  call H__sh('mkdir -pv $(dirname %s)', shellescape(outfile))
-  echo 'a:text => ' . string(a:text)
+  call H__fdir(outfile)
+  call H__puts('a:text => %s', string(a:text))
   let cmd = substitute(a:text, '\ze\(&\?>>*\|$\)', ' | tee >' . outfile . ' ', '')
-  echo 'cmd => ' . string(cmd)
-  call system(cmd)
+  call H__puts('cmd => %s', string(cmd))
+  call H__sh(cmd)
   if filereadable(outfile)
     let filterfile = H__file('~/hii/sh/filter/%s.log', epoch)
-    call H__sh('mkdir -pv $(dirname %s)', shellescape(filterfile))
+    call H__fdir(filterfile)
     call H__sh('cp -v %s %s', outfile, filterfile)
     execute 'vs ' . filterfile
   else
@@ -138,7 +146,7 @@ function! H_list(...)
       let fname = fname . '.md'
     endif
 
-    call H__sh('mkdir -pv $(dirname %s)', shellescape(expand(ffname)))
+    call H__fdir(ffname)
 
     if split_window == v:true
       call H__ex('vs %s', ffname)
