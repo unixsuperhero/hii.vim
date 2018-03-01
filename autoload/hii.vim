@@ -44,7 +44,7 @@ function! H_process(...)
     if match(text,regex) >= 0 && exists('*' . fname)
       " call the line-handler with the args:
       " - regex: the pattern that matched the line
-      " - line: the original line of text matching the regex
+      " - line: the original line of text matching the regex (the entire line)
       " - text: the line without the part matching the regex
       call call(fname, [regex,text,substitute(text,regex,'','')])
       return 1
