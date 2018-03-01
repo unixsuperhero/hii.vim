@@ -2,7 +2,8 @@
 " helper functions
 
 function! H__file(fmt, ...)
-  return expand((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+  let text = (a:0 == 0) ? a:fmt : call('printf', H__lpush(a:fmt, a:000))
+  return expand(text)
 endfunction
 
 function! H__mkdir(dir)
@@ -14,15 +15,22 @@ function! H__fdir(file)
 endfunction
 
 function! H__sh(fmt, ...)
-  return system((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+  let text = (a:0 == 0) ? a:fmt : call('printf', H__lpush(a:fmt, a:000))
+  return system(text)
 endfunction
 
 function! H__ex(fmt, ...)
-  return execute((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+  let text = (a:0 == 0) ? a:fmt : call('printf', H__lpush(a:fmt, a:000))
+  return execute(text)
 endfunction
 
 function! H__puts(fmt, ...)
-  echom (a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt
+  let text = (a:0 == 0) ? a:fmt : call('printf', H__lpush(a:fmt, a:000))
+  echom text
+endfunction
+
+function! H__lpush(a,bs)
+  return extend([a:a],a:bs)
 endfunction
 
 " main code
@@ -45,7 +53,7 @@ function! HHandler(prefix,...)
 endfunction
 
 function! H(...)
-  if call('HHandler', insert(copy(a:000),'H')) == 1
+  if call('HHandler', H__lpush('H',a:000)) == 1
     return 1
   endif
 
@@ -55,10 +63,10 @@ endfunction
 function! H_process(...)
   let text = getline('.')
   let patterns = [['^\s*\$>\?\s*','H_process_sh']]
-  let patterns = extend(patterns, [['^\s*\(fuzzy_filter\|fmatch\):\s*','H_process_fuzzy']])
-  let patterns = extend(patterns, [['^\s*\(regex_filter\|rematch\):\s*','H_process_regex']])
-  let patterns = extend(patterns, [['^\s*\(fuzzy_filter\|fmatch\)!\s*','H_process_fuzzy_remove']])
-  let patterns = extend(patterns, [['^\s*\(regex_filter\|rematch\)!\s*','H_process_regex_remove']])
+  let patterns = H__lpush(['^\s*\(fuzzy_filter\|fmatch\):\s*','H_process_fuzzy'], patterns)
+  let patterns = H__lpush(['^\s*\(regex_filter\|rematch\):\s*','H_process_regex'], patterns)
+  let patterns = H__lpush(['^\s*\(fuzzy_filter\|fmatch\)!\s*','H_process_fuzzy_remove'], patterns)
+  let patterns = H__lpush(['^\s*\(regex_filter\|rematch\)!\s*','H_process_regex_remove'], patterns)
 
   " allow anyone to add their own line filters (or menus in xiki-speak)
   " let g:hii_patterns take precedence over the default patterns
@@ -136,7 +144,7 @@ endfunction
 
 " take categorized notes (subdirs = categories)
 function! H_list(...)
-  if call('HHandler', extend(['H_list'],a:000)) == 1
+  if call('HHandler', H__lpush('H_list',a:000)) == 1
     return 1
   endif
 
