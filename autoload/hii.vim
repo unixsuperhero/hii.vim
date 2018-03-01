@@ -60,6 +60,127 @@ function! H(...)
   return 0
 endfunction
 
+fun! H__prompt(type,input,flines)
+  let hprompt = printf('%s/%s', a:type, a:input)
+  let bflines = a:flines
+  execute '%d'
+  execute '0put=hprompt'
+  execute '1put=bflines'
+  call cursor(1,len(hprompt)+1)
+  redraw
+endfun
+
+fun! HChr(name)
+  let char_map = {
+        \ 'bs': nr2char(8),
+        \ 'backspace': nr2char(8),
+        \ 'delete': nr2char(8),
+        \ 'tab': nr2char(9),
+        \ 'enter': nr2char(13),
+        \ 'newline': nr2char(13),
+        \ 'nl': nr2char(13),
+        \ 'cr': nr2char(13),
+        \ 'sl': nr2char(92),
+        \ 'bsl': nr2char(92),
+        \ 'bslash': nr2char(92),
+        \ }
+
+  if has_key(char_map, a:name)
+    return char_map[a:name]
+  endif
+
+  return 0
+endfun
+
+fun! H_ifilter(...)
+  let olmore = &l:more
+  execute 'setlocal nomore'
+  let nlmore = &l:more
+  let all_lines = getline('^','$')
+  let flines = copy(all_lines)
+  let fstr = ''
+  let pattern = ''
+  execute 'vnew'
+  execute 'set buftype=nofile noswapfile'
+  call H__prompt('if',fstr,flines)
+
+  let g:hiiro_captured_keys = []
+
+  let keep_filter = v:false
+  let grabkeys = v:true
+  redraw
+  while grabkeys == v:true
+    call cursor(1,1)
+    let cchar = getchar()
+    let vals = [VarType(cchar),cchar]
+    if VarType(cchar) == 'string'
+      call add(vals, cchar)
+      if match(cchar, "\<BS>") != -1
+        let fstr = substitute(fstr,'.$','','')
+      elseif cchar == ''
+        let grabkeys = v:false
+      else
+        let fstr = fstr . cchar
+      endif
+    elseif VarType(cchar) == 'number'
+      call add(vals, nr2char(cchar))
+      if cchar == 8
+        let fstr = substitute(fstr,'.$','','')
+      elseif cchar == 27
+        let grabkeys = v:false
+      elseif cchar == 13
+        let grabkeys = v:false
+        let keep_filter = v:true
+      else
+        let fstr = fstr . nr2char(cchar)
+      endif
+    else
+      call add(vals, string(cchar))
+    endif
+
+    call add(g:hiiro_captured_keys, vals)
+
+    let pattern = copy(fstr)
+    let pattern = substitute(pattern, '[*][?]', '{-}', 'ge')
+    let pattern = substitute(pattern, '[+][?]', '{-1,}', 'ge')
+    let pattern = substitute(pattern, '\\\@<!|', '\\|', 'ge')
+    let pattern = substitute(pattern, '\\\@<!{', '\\{', 'ge')
+
+    let mmsc = []
+    let mmec = []
+    let match_start = 0
+    while match(pattern, '{', match_start) != -1
+      call add(mmsc, match(pattern, '{', match_start))
+      let match_start = get(mmsc,-1) + 1
+    endwhile
+
+    let match_start = 0
+    while match(pattern, '}', match_start) != -1
+      call add(mmec, match(pattern, '}', match_start))
+      let match_start = get(mmec,-1) + 1
+    endwhile
+
+    for i in range(len(mmsc) - len(mmec))
+      let pattern = pattern . '}'
+    endfor
+
+    let pattern = escape(pattern, '\')
+    let pattern = escape(pattern, '()|?+{}')
+
+    let flines = filter(copy(all_lines), 'v:val =~? "' . pattern . '"')
+
+    call H__prompt('Filter', fstr, flines)
+  endwhile
+
+  if keep_filter == v:false
+    execute '%d'
+    execute '0put=all_lines'
+    call cursor(1,1)
+    redraw
+  endif
+  let &l:more = olmore
+endfun
+
 function! H_process(...)
   let text = getline('.')
   let patterns = [['^\s*\$>\?\s*','H_process_sh']]
