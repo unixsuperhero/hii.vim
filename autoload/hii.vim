@@ -6,24 +6,24 @@ function! HHandler(prefix,...)
 
   let nfun = join([a:prefix,a:000[0]], '_')
   if exists('*' . nfun)
-    if len(a:000) > 1
+    if a:0 > 1
       let arg_list = copy(a:000)
       call call(nfun, remove(arg_list,1,-1))
     else
       call call(nfun, [])
     endif
     return 1
-  else
-    return 0
   end
+
+  return 0
 endfunction
 
 function! H(...)
   if call('HHandler', extend(['H'],a:000)) == 1
     return 1
   endif
-  return 0
 
+  return 0
 endfunction
 
 function! H_process(...)
@@ -36,22 +36,27 @@ function! H_process(...)
     endif
   endfor
 
-  echo 'no handler found for this prefix on this line'
+  echo 'no handler found for the prefix on this line'
   return 0
+endfunction
+
+" alias to H_process(...)
+function! H_run(...)
+  return call('H_process', a:000)
 endfunction
 
 function! H_process_sh(regex,line,text)
   let epoch = strftime('%s')
-  let outfile = expand('~/hii/sh/' . epoch . '.log')
+  let outfile = expand(printf('~/hii/sh/%s.log', epoch))
   call system('mkdir -pv $(dirname ' . shellescape(outfile) . ')')
   echo 'a:text => ' . string(a:text)
   let cmd = substitute(a:text, '\ze\(&\?>>*\|$\)', ' | tee >' . outfile . ' ', '')
   echo 'cmd => ' . string(cmd)
   call system(cmd)
   if filereadable(outfile)
-    let filterfile = expand('~/hii/sh/filter/' . epoch . '.log')
-    call system('mkdir -pv $(dirname ' . shellescape(filterfile) . ')')
-    call system('cp -v ' . outfile . ' ' . filterfile)
+    let filterfile = expand(printf('~/hii/sh/filter/%s.log', epoch))
+    call system(printf('mkdir -pv $(dirname %s)', shellescape(filterfile)))
+    call system(printf('cp -v %s %s', outfile, filterfile))
     execute 'vs ' . filterfile
   else
     echo 'ERROR: outfile (' . outfile . ') not created!'
@@ -59,20 +64,21 @@ function! H_process_sh(regex,line,text)
 endfunction
 
 function! H_process_regex(regex,line,text)
-  execute('delete ' . line('.'))
+  execute(printf('delete %d', line('.')))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
-  echom 'regex pattern: "' . pattern . '"'
-  execute 'v/' . pattern . '/d'
+  echom printf('regex pattern: "%s"', pattern)
+  execute printf('v/%s/d', pattern)
 endfunction
 
 function! H_process_fuzzy(regex,line,text)
   execute('delete ' . line('.'))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
   let pattern = join(split(pattern, '\ze.'),'.\{-}')
-  echom 'fuzzy pattern: "' . pattern . '"'
-  execute 'v/' . pattern . '/d'
+  echom printf('fuzzy pattern: "%s"', pattern)
+  execute printf('v/%s/d', pattern)
 endfunction
 
+" take categorized notes (subdirs = categories)
 function! H_list(...)
   if call('HHandler', extend(['H_list'],a:000)) == 1
     return 1
@@ -102,6 +108,16 @@ endfunction
 function! H_list_date(...)
   echom strftime('%Y-%m-%d')
   call H_list('date/' . strftime('%Y-%m-%d'))
+endfunction
+
+" alias to H_list(...)
+function! H_note(...)
+  return call('H_list', a:000)
+endfunction
+
+" alias to H_list_date(...)
+function! H_note_date(...)
+  return call('H_list_date', a:000)
 endfunction
 
 command! -nargs=+ H call H(<f-args>)
