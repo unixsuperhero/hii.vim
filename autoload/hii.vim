@@ -7,10 +7,11 @@ function! HHandler(prefix,...)
   let nfun = join([a:prefix,a:000[0]], '_')
   if exists('*' . nfun)
     if a:0 > 1
-      return call(nfun, remove(copy(a:000),1,-1))
+      call call(nfun, remove(copy(a:000),1,-1))
     else
-      return call(nfun, [])
+      call call(nfun, [])
     endif
+    return 1
   end
 
   return 0
@@ -44,7 +45,8 @@ function! H_process(...)
       " - regex: the pattern that matched the line
       " - line: the original line of text matching the regex (the entire line)
       " - text: the line without the part matching the regex
-      return call(fname, [regex,text,substitute(text,regex,'','')])
+      call call(fname, [regex,text,substitute(text,regex,'','')])
+      return 1
     endif
   endfor
 
