@@ -28,9 +28,24 @@ endfunction
 
 function! H_process(...)
   let text = getline('.')
-  let patterns = [['^\s*\$\s\+','H_process_sh'],['^\s*\$>\s*','H_process_sh'],['^\s*fuzzy_filter:\s*','H_process_fuzzy'],['^\s*regex_filter:\s*','H_process_regex']]
+  let patterns = [['^\s*\$>\?\s*','H_process_sh']]
+  let patterns = extend(patterns, [['^\s*\(fuzzy_filter\|fmatch\):\s*','H_process_fuzzy']])
+  let patterns = extend(patterns, [['^\s*\(regex_filter\|rematch\):\s*','H_process_regex']])
+  let patterns = extend(patterns, [['^\s*\(fuzzy_filter\|fmatch\)!\s*','H_process_fuzzy_remove']])
+  let patterns = extend(patterns, [['^\s*\(regex_filter\|rematch\)!\s*','H_process_regex_remove']])
+
+  " allow anyone to add their own line filters (or menus in xiki-speak)
+  " let g:hii_patterns take precedence over the default patterns
+  if exists('g:hii_patterns') && type(g:hii_patterns) == v:t_list
+    let patterns = extend(g:hii_patterns, patterns)
+  endif
+
   for [regex,fname] in patterns
     if match(text,regex) >= 0 && exists('*' . fname)
+      " call the line-handler with the args:
+      " - regex: the pattern that matched the line
+      " - line: the original line of text matching the regex
+      " - text: the line without the part matching the regex
       call call(fname, [regex,text,substitute(text,regex,'','')])
       return 1
     endif
@@ -76,6 +91,21 @@ function! H_process_fuzzy(regex,line,text)
   let pattern = join(split(pattern, '\ze.'),'.\{-}')
   echom printf('fuzzy pattern: "%s"', pattern)
   execute printf('v/%s/d', pattern)
+endfunction
+
+function! H_process_regex_remove(regex,line,text)
+  execute(printf('delete %d', line('.')))
+  let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
+  echom printf('regex pattern: "%s"', pattern)
+  execute printf('g/%s/d', pattern)
+endfunction
+
+function! H_process_fuzzy_remove(regex,line,text)
+  execute('delete ' . line('.'))
+  let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
+  let pattern = join(split(pattern, '\ze.'),'.\{-}')
+  echom printf('fuzzy pattern: "%s"', pattern)
+  execute printf('g/%s/d', pattern)
 endfunction
 
 " take categorized notes (subdirs = categories)
