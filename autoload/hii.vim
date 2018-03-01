@@ -1,4 +1,24 @@
 
+" helper functions
+
+function! H__file(fmt, ...)
+  return expand((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+endfunction
+
+function! H__sh(fmt, ...)
+  return system((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+endfunction
+
+function! H__ex(fmt, ...)
+  return execute((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
+endfunction
+
+function! H__puts(fmt, ...)
+  echom (a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt
+endfunction
+
+" main code
+
 function! HHandler(prefix,...)
   if a:0 == 0
     return 0
@@ -57,16 +77,16 @@ endfunction
 
 function! H_process_sh(regex,line,text)
   let epoch = strftime('%s')
-  let outfile = expand(printf('~/hii/sh/%s.log', epoch))
-  call system('mkdir -pv $(dirname ' . shellescape(outfile) . ')')
+  let outfile = H__file('~/hii/sh/%s.log', epoch)
+  call H__sh('mkdir -pv $(dirname %s)', shellescape(outfile))
   echo 'a:text => ' . string(a:text)
   let cmd = substitute(a:text, '\ze\(&\?>>*\|$\)', ' | tee >' . outfile . ' ', '')
   echo 'cmd => ' . string(cmd)
   call system(cmd)
   if filereadable(outfile)
-    let filterfile = expand(printf('~/hii/sh/filter/%s.log', epoch))
-    call system(printf('mkdir -pv $(dirname %s)', shellescape(filterfile)))
-    call system(printf('cp -v %s %s', outfile, filterfile))
+    let filterfile = H__file('~/hii/sh/filter/%s.log', epoch)
+    call H__sh('mkdir -pv $(dirname %s)', shellescape(filterfile))
+    call H__sh('cp -v %s %s', outfile, filterfile)
     execute 'vs ' . filterfile
   else
     echo 'ERROR: outfile (' . outfile . ') not created!'
@@ -74,33 +94,33 @@ function! H_process_sh(regex,line,text)
 endfunction
 
 function! H_process_regex(regex,line,text)
-  execute(printf('delete %d', line('.')))
+  call H__ex('delete %d', line('.'))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
-  echom printf('regex pattern: "%s"', pattern)
-  execute printf('v/%s/d', pattern)
+  call H__puts('regex pattern: "%s"', pattern)
+  call H__ex('v/%s/d', pattern)
 endfunction
 
 function! H_process_fuzzy(regex,line,text)
-  execute('delete ' . line('.'))
+  call H__ex('delete %d', line('.'))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
   let pattern = join(split(pattern, '\ze.'),'.\{-}')
-  echom printf('fuzzy pattern: "%s"', pattern)
-  execute printf('v/%s/d', pattern)
+  call H__puts('fuzzy pattern: "%s"', pattern)
+  call H__ex('v/%s/d', pattern)
 endfunction
 
 function! H_process_regex_remove(regex,line,text)
-  execute(printf('delete %d', line('.')))
+  call H__ex('delete %d', line('.'))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
-  echom printf('regex pattern: "%s"', pattern)
-  execute printf('g/%s/d', pattern)
+  call H__puts('regex pattern: "%s"', pattern)
+  call H__ex('g/%s/d', pattern)
 endfunction
 
 function! H_process_fuzzy_remove(regex,line,text)
-  execute('delete ' . line('.'))
+  call H__ex('delete %d', line('.'))
   let pattern = substitute(a:text, '^\s*\|\s*$', '', 'g')
   let pattern = join(split(pattern, '\ze.'),'.\{-}')
-  echom printf('fuzzy pattern: "%s"', pattern)
-  execute printf('g/%s/d', pattern)
+  call H__puts('fuzzy pattern: "%s"', pattern)
+  call H__ex('g/%s/d', pattern)
 endfunction
 
 " take categorized notes (subdirs = categories)
@@ -118,20 +138,20 @@ function! H_list(...)
       let fname = fname . '.md'
     endif
 
-    call system('mkdir -pv $(dirname ' . shellescape(expand(ffname)) . ')')
+    call H__sh('mkdir -pv $(dirname %s)', shellescape(expand(ffname)))
 
     if split_window == v:true
-      execute 'vs ' . ffname
-      execute 'lcd ~/lists'
+      call H__ex('vs %s', ffname)
+      call H__ex('lcd ~/lists')
       let split_window = v:false
     else
-      execute 'e ' . fname
+      call H__ex('e %s', fname)
     endif
   endfor
 endfunction
 
 function! H_list_date(...)
-  echom strftime('%Y-%m-%d')
+  call H__puts(strftime('%Y-%m-%d'))
   call H_list('date/' . strftime('%Y-%m-%d'))
 endfunction
 
