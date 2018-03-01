@@ -5,12 +5,12 @@ function! H__file(fmt, ...)
   return expand((a:0 > 0) ? call('printf', extend([a:fmt],a:000)) : a:fmt)
 endfunction
 
-function! H__fdir(file)
-  call H__sh('mkdir -pv $(dirname %s)', shellescape(expand(a:file)))
-endfunction
-
 function! H__mkdir(dir)
   call H__sh('mkdir -pv %s', shellescape(expand(a:dir)))
+endfunction
+
+function! H__fdir(file)
+  call H__mkdir(fnamemodify(a:file, ':h'))
 endfunction
 
 function! H__sh(fmt, ...)
