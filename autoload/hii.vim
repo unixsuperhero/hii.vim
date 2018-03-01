@@ -32,9 +32,12 @@ function! HHandler(prefix,...)
     return 0
   endif
 
-  let nfun = join([a:prefix,a:000[0]], '_')
+  let args = copy(a:000)
+  let scmd = remove(args,0)
+  let nfun = join([a:prefix, scmd], '_')
+
   if exists('*' . nfun)
-    call call(nfun, (a:0 > 1) ? remove(copy(a:000),1,-1) : [])
+    call call(nfun, args)
     return 1
   end
 
@@ -42,7 +45,7 @@ function! HHandler(prefix,...)
 endfunction
 
 function! H(...)
-  if call('HHandler', extend(['H'],a:000)) == 1
+  if call('HHandler', insert(copy(a:000),'H')) == 1
     return 1
   endif
 
