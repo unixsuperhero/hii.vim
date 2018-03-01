@@ -7,8 +7,7 @@ function! HHandler(prefix,...)
   let nfun = join([a:prefix,a:000[0]], '_')
   if exists('*' . nfun)
     if a:0 > 1
-      let arg_list = copy(a:000)
-      call call(nfun, remove(arg_list,1,-1))
+      call call(nfun, remove(copy(a:000),1,-1))
     else
       call call(nfun, [])
     endif
@@ -152,3 +151,6 @@ endfunction
 
 command! -nargs=+ H call H(<f-args>)
 
+" this probably shouldn't be a global setting, but i'm the only person using
+" this right now
+nmap <leader>hr :H run<cr>
