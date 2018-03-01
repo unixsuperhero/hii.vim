@@ -153,4 +153,9 @@ command! -nargs=+ H call H(<f-args>)
 
 " this probably shouldn't be a global setting, but i'm the only person using
 " this right now
-nmap <leader>hr :H run<cr>
+nnoremap <leader>hr :H run<cr>
+
+" another mapping i shouldn't force on anyone (i normally don't do this, but
+" who wants to exit insert mode, then hit a mapping to run a command you just
+" typed, when you could just hit the mapping)
+inoremap ;;r <esc>:H run<cr>
