@@ -212,6 +212,10 @@ endfunction
 
 " alias to H_process(...)
 function! H_run(...)
+  ruby <<CODE
+  load '/home/toyota/hii/h-run.rb'
+CODE
+  return 1
   return call('H_process', a:000)
 endfunction
 
@@ -271,6 +275,10 @@ function! H_list(...)
 
   let split_window = v:true
   for fname in a:000
+    if match(fname, '[.]\S\+$') == -1
+      let fname = fname . '.md'
+    end
+
     let ffname = '~/lists/' . fname
 
     if filereadable(expand(ffname . '.md'))
